@@ -58,9 +58,9 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  /* 题干挖空（ ）/（）渲染成醒目填空框，答题人能看清空在哪 */
+  /* 题干挖空（ ）/（）：用全角空格把括号打完整，一眼看清空在哪 */
   function stemHtml(text) {
-    return esc(text).replace(/（\s*）/g, "（<span class=\"q-blank\"></span>）");
+    return esc(text).replace(/（\s*）/g, "（　　）");
   }
 
   function shuffle(arr) {
