@@ -41,6 +41,7 @@
     qIndex: 0,
     answered: {},       // qIndex -> {user:[letters], correct:bool}（set/gaopin 判分用）
     mockPicks: {},      // qIndex -> [letters]（模考作答，交卷前不判分）
+    picking: {},        // qIndex -> [letters]（set/gaopin 多选暂存，确认答案前不判分）
     score: 0,
     correctCount: 0,
     answeredCount: 0,
@@ -198,6 +199,7 @@
     state.qIndex = 0;
     state.answered = {};
     state.mockPicks = {};
+    state.picking = {};
     state.score = 0;
     state.correctCount = 0;
     state.answeredCount = 0;
@@ -306,7 +308,9 @@
     const isMulti = item.sec.type === "multi";
     const picked = isMock
       ? (state.mockPicks[state.qIndex] || [])
-      : doneAns ? doneAns.user : [];
+      : doneAns ? doneAns.user
+      : isMulti ? (state.picking[state.qIndex] || (state.picking[state.qIndex] = []))
+      : [];
 
     q.options.forEach(([letter, text]) => {
       const btn = document.createElement("button");
@@ -330,9 +334,7 @@
           }
           renderQuestion();
         } else if (isMulti) {
-          if (picked.includes(letter)) picked.splice(picked.indexOf(letter), 1);
-          else picked.push(letter);
-          renderQuestion();
+          toggleMulti(letter);
         } else {
           reveal([letter]);
         }
@@ -420,12 +422,21 @@
     const q = item.q;
     const correct = userLetters.slice().sort().join("") === q.answer.split("").sort().join("");
     state.answered[state.qIndex] = { user: userLetters, correct };
+    delete state.picking[state.qIndex];
     state.answeredCount += 1;
     if (correct) {
       state.correctCount += 1;
       state.score += item.sec.score;
     }
     state.score = Math.round(state.score * 10) / 10;
+    renderQuestion();
+  }
+
+  /* 多选点选/取消（套卷与高频题）：暂存到 state.picking，确认答案才判分 */
+  function toggleMulti(letter) {
+    const picks = state.picking[state.qIndex] || (state.picking[state.qIndex] = []);
+    if (picks.includes(letter)) picks.splice(picks.indexOf(letter), 1);
+    else picks.push(letter);
     renderQuestion();
   }
 
@@ -459,6 +470,7 @@
     state.qIndex = 0;
     state.answered = {};
     state.mockPicks = {};
+    state.picking = {};
     state.score = 0;
     state.correctCount = 0;
     state.answeredCount = 0;
@@ -488,6 +500,7 @@
     state.qIndex = Math.min(sv.qIndex || 0, paper.length - 1);
     state.answered = {};
     state.mockPicks = sv.picks || {};
+    state.picking = {};
     state.score = 0;
     state.correctCount = 0;
     state.answeredCount = 0;
@@ -528,6 +541,7 @@
     state.qIndex = fromIndex || 0;
     state.answered = {};
     state.mockPicks = {};
+    state.picking = {};
     state.score = 0;
     state.correctCount = 0;
     state.answeredCount = 0;
