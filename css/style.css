@@ -181,6 +181,46 @@ body {
 
 .footer { text-align: center; color: var(--ink-3); font-size: 12px; padding: 22px 16px 30px; }
 
+/* ---------- pdf section ---------- */
+.icon-pdf { background: #b45309; }
+.pdf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.pdf-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); transition: transform .12s, box-shadow .12s; }
+.pdf-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(28, 36, 51, .08); }
+.pdf-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--red-soft); color: var(--red); font-weight: 700; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; flex: none; }
+.pdf-name { font-weight: 700; font-size: 13.5px; word-break: break-all; }
+.pdf-sub { color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+
+/* ---------- gaopin ---------- */
+.gp-tabs { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
+.gp-tab { border: 1px solid var(--line); background: #fff; color: var(--ink-2); padding: 8px 26px; border-radius: 999px; font-size: 14px; cursor: pointer; }
+.gp-tab.active { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+.gp-tools { margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+.gp-stats { color: var(--ink-2); font-size: 13px; }
+.gaopin-list { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
+.gp-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 20px; }
+.gp-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.gp-head .q-section-chip { margin-bottom: 0; }
+.gp-sets { font-size: 12.5px; color: var(--ink-3); }
+.gp-stem { font-size: 15px; line-height: 1.7; }
+.gp-answer { margin-top: 12px; border: 1px solid var(--line); background: #f7f9fc; border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+.gp-answer-row { margin-bottom: 6px; }
+.gp-explain { color: var(--ink-2); font-size: 13.5px; line-height: 1.7; }
+.gp-explain::before { content: "解析 "; font-weight: 700; color: var(--ink-3); }
+.gp-explain:empty::before { content: ""; }
+.gp-actions { margin-top: 12px; display: flex; gap: 10px; }
+.badge-mock { background: #f3eefe; color: #7c3aed; }
+.badge-gaopin { background: var(--amber-soft); color: var(--amber); }
+.history-title .badge { margin-left: 8px; vertical-align: 1px; }
+
+/* ---------- mock ---------- */
+.mock-list { margin-top: 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.mock-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; position: relative; overflow: hidden; }
+.mock-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--card-accent, var(--blue)); }
+.mock-title { font-weight: 700; font-size: 17px; }
+.mock-sub { color: var(--ink-2); font-size: 13px; margin-top: 6px; line-height: 1.7; }
+.mock-note { color: var(--ink-3); font-size: 12.5px; margin-top: 8px; line-height: 1.6; }
+.mock-actions { margin-top: 14px; }
+
 @media (max-width: 640px) {
   .exam-head { flex-wrap: wrap; top: 58px; }
   .exam-title { font-size: 13.5px; }

@@ -15,6 +15,8 @@
     </a>
     <nav class="topnav">
       <button class="nav-btn" data-nav="home">套卷</button>
+      <button class="nav-btn" data-nav="gaopin">高频题</button>
+      <button class="nav-btn" data-nav="mock">模考</button>
       <button class="nav-btn" data-nav="history">历史记录</button>
     </nav>
   </div>
@@ -23,7 +25,7 @@
 <main id="view-home" class="view">
   <section class="hero">
     <h1>银行业从业资格考试 · 七套卷</h1>
-    <p>两大板块 · 各 7 套真题精选 · 每答一题立即给答案与解析 · 成绩自动存档</p>
+    <p>两大板块 · 各 7 套真题精选 · 套卷即答即判 · 高频题专区 · 模考整卷判分 · 原卷 PDF 下载</p>
     <div class="hero-stats" id="hero-stats"></div>
   </section>
 
@@ -51,6 +53,36 @@
       </div>
     </div>
     <div class="set-grid" id="grid-个人理财"></div>
+  </section>
+
+  <section class="subject-block" id="subject-pdf">
+    <div class="subject-head">
+      <div class="subject-title">
+        <span class="subject-icon icon-pdf">卷</span>
+        <div>
+          <h2>原卷PDF版本</h2>
+          <p class="subject-sub">题库原始扫描版 PDF · 点击可在线查看或下载（答案 PDF 含全部解析）</p>
+        </div>
+      </div>
+    </div>
+    <div class="pdf-grid">
+      <a class="pdf-card" href="pdfs/25法规七套卷.pdf" target="_blank" rel="noopener">
+        <span class="pdf-icon">规</span>
+        <div><div class="pdf-name">25法规七套卷.pdf</div><div class="pdf-sub">法规题目卷 · 0.8 MB</div></div>
+      </a>
+      <a class="pdf-card" href="pdfs/法规七套卷答案.pdf" target="_blank" rel="noopener">
+        <span class="pdf-icon">解</span>
+        <div><div class="pdf-name">法规七套卷答案.pdf</div><div class="pdf-sub">法规答案+解析 · 68.6 MB</div></div>
+      </a>
+      <a class="pdf-card" href="pdfs/25个人理财七套卷.pdf" target="_blank" rel="noopener">
+        <span class="pdf-icon">财</span>
+        <div><div class="pdf-name">25个人理财七套卷.pdf</div><div class="pdf-sub">个人理财题目卷 · 33.7 MB</div></div>
+      </a>
+      <a class="pdf-card" href="pdfs/个人理财答案.pdf" target="_blank" rel="noopener">
+        <span class="pdf-icon">析</span>
+        <div><div class="pdf-name">个人理财答案.pdf</div><div class="pdf-sub">个人理财答案+解析 · 25.6 MB</div></div>
+      </a>
+    </div>
   </section>
 </main>
 
@@ -105,6 +137,30 @@
   </div>
   <div class="review-summary" id="review-summary"></div>
   <div class="review-body" id="review-body"></div>
+</main>
+
+<main id="view-gaopin" class="view" hidden>
+  <section class="hero hero-small">
+    <h1>高频题专区</h1>
+    <p>整合七套卷中重复出现的高频考点题，附答案解析，可即答即判或直接查看答案</p>
+    <div class="gp-tabs">
+      <button class="gp-tab active" data-subj="法规">法规</button>
+      <button class="gp-tab" data-subj="个人理财">个人理财</button>
+    </div>
+    <div class="gp-tools">
+      <span class="gp-stats" id="gaopin-stats"></span>
+      <button class="btn btn-primary" id="gaopin-all">全部连刷</button>
+    </div>
+  </section>
+  <div class="gaopin-list" id="gaopin-list"></div>
+</main>
+
+<main id="view-mock" class="view" hidden>
+  <section class="hero hero-small">
+    <h1>模考板块</h1>
+    <p>与真实考试同结构的整卷模考：随机抽题组卷 · 交卷后统一判分 · 作答过程中不显示答案</p>
+  </section>
+  <div class="mock-list" id="mock-list"></div>
 </main>
 
 <footer class="footer">题库来源：天一新奥《考点精析与上机题库》七套卷 · 数据由 PDF 解析生成，仅供学习参考</footer>
