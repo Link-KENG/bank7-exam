@@ -1,12 +1,14 @@
 /* 银行业从业资格 · 七套卷答题
    数据: data/fagui.json / data/licai.json（套卷）
          data/fagui_gaopin.json / data/licai_gaopin.json（高频题）
-   记录: localStorage['bank7_history_v1']，kind: set | mock | gaopin */
+   记录: localStorage['bank7_history_v1']，kind: set | mock | gaopin
+   模考进度: localStorage['bank7_mock_save_v1']，按板块存未交卷的作答，可续答 */
 
 (function () {
   "use strict";
 
   const STORE_KEY = "bank7_history_v1";
+  const MOCK_SAVE_KEY = "bank7_mock_save_v1";
   const DATA_VERSION = 1;
 
   const SUBJECTS = ["法规", "个人理财"];
@@ -74,6 +76,35 @@
   function saveHistory(list) {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(list)); }
     catch (e) { alert("本地存储已满或不可用，记录未能保存：" + e.message); }
+  }
+
+  /* 模考进度存档：{ [板块]: { paper:[全库序号], picks:{题号:[字母]}, qIndex, ts } } */
+  function loadMockSaves() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(MOCK_SAVE_KEY) || "{}");
+      return raw && typeof raw === "object" ? raw : {};
+    } catch { return {}; }
+  }
+  function saveMockSaves(saves) {
+    try { localStorage.setItem(MOCK_SAVE_KEY, JSON.stringify(saves)); } catch (e) { /* 静默 */ }
+  }
+  function clearMockSave(subject) {
+    const saves = loadMockSaves();
+    if (saves[subject]) {
+      delete saves[subject];
+      saveMockSaves(saves);
+    }
+  }
+  function saveMockProgress() {
+    if (state.mode !== "mock" || !state.paper) return;
+    const saves = loadMockSaves();
+    saves[state.subject] = {
+      paper: state.paper.map((it) => it.q._gi),
+      picks: state.mockPicks,
+      qIndex: state.qIndex,
+      ts: Date.now(),
+    };
+    saveMockSaves(saves);
   }
 
   function fmtDate(ts) {
@@ -226,6 +257,7 @@
     $("#exam-bar").style.width = (done / total * 100) + "%";
     $("#exam-progress-text").textContent = `${pos} / ${total} 题`;
     $("#exam-score-strip").innerHTML = scoreStripHtml();
+    renderSheet();
 
     if (state.qIndex >= total) return finishExam();
 
@@ -315,6 +347,46 @@
       const act = el("div", "q-actions", `<span></span>`);
       card.appendChild(act);
     }
+
+    if (state.mode === "mock") saveMockProgress();
+  }
+
+  /* 答题卡：任意跳题 */
+  function jumpTo(idx) {
+    const total = curTotal();
+    if (idx < 0 || idx >= total) return;
+    state.qIndex = idx;
+    renderQuestion();
+  }
+
+  function renderSheet() {
+    const grid = $("#sheet-grid");
+    grid.innerHTML = "";
+    const total = curTotal();
+    const items = state.mode === "set" ? curFlat() : curPaper();
+    let lastType = null;
+    for (let idx = 0; idx < total; idx++) {
+      const item = items[idx];
+      if (!item) break;
+      if (item.sec.type !== lastType) {
+        grid.appendChild(el("div", "sheet-sec", `${item.sec.name}（每题 ${item.sec.score} 分）`));
+        lastType = item.sec.type;
+      }
+      let cls = "sheet-num";
+      if (idx === state.qIndex) cls += " cur";
+      if (state.mode === "mock") {
+        if ((state.mockPicks[idx] || []).length) cls += " picked";
+      } else {
+        const a = state.answered[idx];
+        if (a) cls += a.correct ? " ok" : " no";
+      }
+      const btn = el("button", cls, String(idx + 1));
+      btn.title = `跳转到第 ${idx + 1} 题`;
+      btn.addEventListener("click", () => jumpTo(idx));
+      grid.appendChild(btn);
+    }
+    $("#sheet-toggle").textContent =
+      `${grid.hidden ? "展开" : "收起"}答题卡（已答 ${pickedCount()}/${total}）`;
   }
 
   function reveal(userLetters) {
@@ -370,6 +442,35 @@
     renderQuestion();
   }
 
+  /* 续答上次未交卷的模考：按全库序号恢复同一套卷、作答与题号 */
+  function resumeMock(subject) {
+    const sv = loadMockSaves()[subject];
+    if (!sv) return;
+    const counters = {};
+    const paper = [];
+    sv.paper.forEach((gi) => {
+      const f = FLAT[subject][gi];
+      if (!f) return;
+      counters[f.sec.type] = (counters[f.sec.type] || 0) + 1;
+      paper.push({ set: f.set, sec: f.sec, q: f.q, num: counters[f.sec.type] });
+    });
+    if (!paper.length) { clearMockSave(subject); return; }
+    state.mode = "mock";
+    state.subject = subject;
+    state.setId = null;
+    state.paper = paper;
+    state.qIndex = Math.min(sv.qIndex || 0, paper.length - 1);
+    state.answered = {};
+    state.mockPicks = sv.picks || {};
+    state.score = 0;
+    state.correctCount = 0;
+    state.answeredCount = 0;
+    $("#exam-title").textContent = `${subject} · 模考卷（继续作答）`;
+    $("#exam-score-strip").innerHTML = scoreStripHtml();
+    show("exam");
+    renderQuestion();
+  }
+
   function gradeMock() {
     // 交卷：统一判分，未作答按答错计
     const paper = curPaper();
@@ -412,7 +513,10 @@
 
   /* ---------------- finish / result ---------------- */
   function finishExam() {
-    if (state.mode === "mock") gradeMock();
+    if (state.mode === "mock") {
+      gradeMock();
+      clearMockSave(state.subject);   // 已交卷，进度存档完成使命
+    }
 
     let rec;
     if (state.mode === "set") {
@@ -517,6 +621,27 @@
     $("#result-breakdown").innerHTML = `
       <div class="rb-row"><span>答对 / 答错 / 未答</span><b>${rec.correctCount} / ${rec.answeredCount - rec.correctCount} / ${rec.qCount - rec.answeredCount}</b></div>
       ${rec.sections.map((sec) => `<div class="rb-row"><span>${esc(sec.name)}（每题 ${sec.score} 分）</span><b>${sec.correct}/${sec.count} · ${(sec.correct * sec.score).toFixed(1)} 分</b></div>`).join("")}`;
+
+    // 错题栏（含未作答）：可展开/收起，提前交卷也能逐题看错因
+    const wrongBox = $("#result-wrong");
+    wrongBox.innerHTML = "";
+    const rf = reviewItems(rec);
+    const wrong = rec.items.map((it, idx) => ({ it, f: rf[idx] }))
+      .filter((x) => x.f && !x.it.correct);
+    if (wrong.length) {
+      wrongBox.innerHTML = `
+        <button class="wrong-toggle" id="wrong-toggle" type="button">展开错题栏（${wrong.length} 题）</button>
+        <div class="wrong-body" id="wrong-body" hidden>
+          ${wrong.map(({ it, f }) => `<div class="r-item">${rItemHtml(it, f)}</div>`).join("")}
+        </div>`;
+      $("#wrong-toggle").addEventListener("click", () => {
+        const body2 = $("#wrong-body");
+        body2.hidden = !body2.hidden;
+        $("#wrong-toggle").textContent = `${body2.hidden ? "展开" : "收起"}错题栏（${wrong.length} 题）`;
+      });
+    } else {
+      wrongBox.innerHTML = `<div class="wrong-clean">🎉 全部答对，没有错题</div>`;
+    }
     show("result");
   }
 
@@ -594,6 +719,24 @@
     });
   }
 
+  /* 单条回顾/错题 HTML（回顾页与结果页错题栏共用） */
+  function rItemHtml(it, f) {
+    const q = f.q;
+    const tag = it.skipped ? `<span class="r-tag skip">未作答</span>`
+      : it.correct ? `<span class="r-tag ok">✓ 答对</span>`
+      : `<span class="r-tag no">✗ 答错</span>`;
+    return `
+      <div class="r-head">${tag}<span class="r-num">${esc(f.sec.name)} · 第 ${f.num} 题</span></div>
+      <div class="r-stem">${esc(q.stem)}</div>
+      ${q.options.map(([letter, text]) => {
+        const cls = q.answer.includes(letter) ? " ans" : it.user.includes(letter) ? " mine" : "";
+        const mark = q.answer.includes(letter) ? " ✓" : it.user.includes(letter) ? " ✗" : "";
+        return `<div class="r-opt${cls}"><span class="opt-letter">${letter}.</span> ${esc(text)}${mark}</div>`;
+      }).join("")}
+      ${it.skipped ? "" : `<div class="r-opt" style="margin-top:6px">你的答案：<b>${esc(it.user.join("")) || "—"}</b>　正确答案：<b>${esc(q.answer)}</b></div>`}
+      <div class="r-explain">${esc(q.explanation || "")}</div>`;
+  }
+
   function openReview(id) {
     const history = loadHistory();
     const rec = history.find((r) => r.id === id);
@@ -610,22 +753,7 @@
     rec.items.forEach((it, idx) => {
       const f = rf[idx];
       if (!f) return;
-      const q = f.q;
-      const node = el("div", "r-item");
-      const tag = it.skipped ? `<span class="r-tag skip">未作答</span>`
-        : it.correct ? `<span class="r-tag ok">✓ 答对</span>`
-        : `<span class="r-tag no">✗ 答错</span>`;
-      node.innerHTML = `
-        <div class="r-head">${tag}<span class="r-num">${esc(f.sec.name)} · 第 ${f.num} 题</span></div>
-        <div class="r-stem">${esc(q.stem)}</div>
-        ${q.options.map(([letter, text]) => {
-          const cls = q.answer.includes(letter) ? " ans" : it.user.includes(letter) ? " mine" : "";
-          const mark = q.answer.includes(letter) ? " ✓" : it.user.includes(letter) ? " ✗" : "";
-          return `<div class="r-opt${cls}"><span class="opt-letter">${letter}.</span> ${esc(text)}${mark}</div>`;
-        }).join("")}
-        ${it.skipped ? "" : `<div class="r-opt" style="margin-top:6px">你的答案：<b>${esc(it.user.join("")) || "—"}</b>　正确答案：<b>${esc(q.answer)}</b></div>`}
-        <div class="r-explain">${esc(q.explanation || "")}</div>`;
-      body.appendChild(node);
+      body.appendChild(el("div", "r-item", rItemHtml(it, f)));
     });
     show("review");
   }
@@ -675,21 +803,42 @@
 
   /* ---------------- mock view ---------------- */
   function renderMock() {
+    const saves = loadMockSaves();
     const box = $("#mock-list");
     box.innerHTML = "";
     for (const subj of SUBJECTS) {
       const cfg = MOCK_CFG[subj];
+      const total = cfg.reduce((s, x) => s + x.n, 0);
+      const sv = saves[subj];
+      const done = sv
+        ? Object.keys(sv.picks || {}).filter((k) => (sv.picks[k] || []).length).length
+        : 0;
       const card = el("div", "mock-card");
       card.style.setProperty("--card-accent", subj === "法规" ? "#2563eb" : "#0d9488");
       card.innerHTML = `
         <div class="mock-title">${subj} · 模考卷</div>
         <div class="mock-sub">${cfg.map((s) => `${s.name} ${s.n} 题（每题 ${s.score} 分）`).join(" · ")}</div>
         <div class="mock-note">从七套卷题库随机抽题组卷 · 整卷作答后统一判分 · 不逐题显示答案 · 成绩存入历史记录可回顾</div>
-        <div class="mock-actions"><button class="btn btn-primary">开始模考</button></div>`;
-      card.querySelector("button").addEventListener("click", () => {
-        if (!confirm(`开始${subj}模考？共 ${cfg.reduce((s, x) => s + x.n, 0)} 题，交卷后统一判分。`)) return;
-        startMock(subj);
-      });
+        ${sv ? `<div class="mock-save-note">⏸ 上次作答已保存（${fmtDate(sv.ts)}）：已答 ${done}/${total} 题，可继续作答或重新组卷</div>` : ""}
+        <div class="mock-actions">
+          ${sv
+            ? `<button class="btn btn-primary">继续作答</button><button class="btn">重新组卷</button>`
+            : `<button class="btn btn-primary">开始模考</button>`}
+        </div>`;
+      const btns = card.querySelectorAll(".mock-actions button");
+      if (sv) {
+        btns[0].addEventListener("click", () => resumeMock(subj));
+        btns[1].addEventListener("click", () => {
+          if (!confirm(`确认放弃已保存的${subj}模考进度并重新组卷？共 ${total} 题。`)) return;
+          clearMockSave(subj);
+          startMock(subj);
+        });
+      } else {
+        btns[0].addEventListener("click", () => {
+          if (!confirm(`开始${subj}模考？共 ${total} 题，交卷后统一判分。`)) return;
+          startMock(subj);
+        });
+      }
       box.appendChild(card);
     }
   }
@@ -707,7 +856,9 @@
   $(".brand").addEventListener("click", (e) => { e.preventDefault(); show("home"); });
 
   $("#exam-exit").addEventListener("click", () => {
-    if (!confirm("退出后本次作答不会保存，确定退出吗？")) return;
+    if (state.mode === "mock") {
+      if (!confirm("模考进度已自动保存，之后可在模考板块继续作答。确定退出吗？")) return;
+    } else if (!confirm("退出后本次作答不会保存，确定退出吗？")) return;
     show("home");
   });
   $("#exam-submit").addEventListener("click", () => {
@@ -718,6 +869,12 @@
     } else if (!confirm(`已作答 ${done}/${total} 题，未作答的题目将按答错计分。确定交卷吗？`)) return;
     state.qIndex = total;
     finishExam();
+  });
+
+  $("#sheet-toggle").addEventListener("click", () => {
+    const grid = $("#sheet-grid");
+    grid.hidden = !grid.hidden;
+    renderSheet();   // 顺带刷新标题文字
   });
 
   $("#review-back").addEventListener("click", () => { show("history"); renderHistory(); });

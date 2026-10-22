@@ -219,7 +219,30 @@ body {
 .mock-title { font-weight: 700; font-size: 17px; }
 .mock-sub { color: var(--ink-2); font-size: 13px; margin-top: 6px; line-height: 1.7; }
 .mock-note { color: var(--ink-3); font-size: 12.5px; margin-top: 8px; line-height: 1.6; }
-.mock-actions { margin-top: 14px; }
+.mock-actions { margin-top: 14px; display: flex; gap: 10px; }
+.mock-save-note { margin-top: 12px; font-size: 13px; color: #b45309; background: #fffbeb; border: 1px dashed #f59e0b; border-radius: 9px; padding: 8px 12px; line-height: 1.6; }
+
+/* ---------- 答题卡 ---------- */
+.sheet-box { margin-top: 16px; }
+.sheet-toggle { border: 1px solid var(--line); background: #fff; color: var(--ink-2); font-size: 13.5px; padding: 8px 18px; border-radius: 999px; cursor: pointer; }
+.sheet-toggle:hover { border-color: var(--blue); color: var(--blue); }
+.sheet-grid { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+.sheet-sec { flex-basis: 100%; font-size: 13px; font-weight: 700; color: var(--ink-2); margin: 8px 0 0; }
+.sheet-sec:first-child { margin-top: 0; }
+.sheet-num { width: 36px; height: 31px; border: 1px solid var(--line); border-radius: 7px; background: #fafbfd; color: var(--ink-2); font-size: 12.5px; cursor: pointer; }
+.sheet-num:hover { border-color: var(--blue); color: var(--blue); }
+.sheet-num.cur { border-color: var(--blue); border-width: 2px; color: var(--blue); font-weight: 700; }
+.sheet-num.ok { background: #dcfce7; border-color: #bbf7d0; color: #15803d; }
+.sheet-num.no { background: #fee2e2; border-color: #fecaca; color: #b91c1c; }
+.sheet-num.picked { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
+
+/* ---------- 结果页错题栏 ---------- */
+.result-wrong { margin-top: 16px; text-align: left; }
+.wrong-toggle { width: 100%; border: 1px solid var(--line); background: #fff; color: var(--ink-2); font-size: 14px; font-weight: 600; padding: 10px 14px; border-radius: 10px; cursor: pointer; }
+.wrong-toggle:hover { border-color: var(--red); color: var(--red); }
+.wrong-body { margin-top: 10px; display: flex; flex-direction: column; gap: 10px; text-align: left; }
+.wrong-body .r-item { border-left: 3px solid var(--red); }
+.wrong-clean { font-size: 14px; color: var(--green); background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 10px 14px; }
 
 @media (max-width: 640px) {
   .exam-head { flex-wrap: wrap; top: 58px; }
