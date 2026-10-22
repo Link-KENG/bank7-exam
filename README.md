@@ -41,7 +41,7 @@ python -m http.server 8000
 题库解析脚本在 `../scripts/`（OCR 提取 → 解析 → 合并答案 → 校验），修改数据后：
 
 ```bash
-git add site/data && git commit -m "update data" && git push
+git add data && git commit -m "update data" && git push
 ```
 
-GitHub Pages 自动部署 `site/` 目录（gh-pages 分支）。
+GitHub Pages 直接从 main 分支根目录自动部署（仓库根目录即站点文件）。
