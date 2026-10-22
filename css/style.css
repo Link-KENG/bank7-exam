@@ -103,6 +103,8 @@ body {
 .q-section-chip.multi { background: #f3eefe; color: #7c3aed; }
 .q-section-chip.judge { background: var(--amber-soft); color: var(--amber); }
 .q-stem { font-size: 16.5px; line-height: 1.75; margin-bottom: 18px; }
+/* 题干挖空填空框 */
+.q-blank { display: inline-block; min-width: 2.6em; height: 1.02em; vertical-align: -2px; border-bottom: 2px solid var(--blue); background: #eff6ff; border-radius: 5px; margin: 0 1px; }
 .q-options { display: flex; flex-direction: column; gap: 10px; }
 .q-option { display: flex; align-items: flex-start; gap: 12px; border: 1.5px solid var(--line); border-radius: 11px; padding: 11px 14px; cursor: pointer; background: #fff; transition: border-color .12s, background .12s; text-align: left; font-size: 15px; line-height: 1.6; width: 100%; font-family: inherit; color: var(--ink); }
 .q-option:hover { border-color: #b9c6dd; }

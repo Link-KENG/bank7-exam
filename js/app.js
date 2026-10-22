@@ -58,6 +58,11 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+  /* 题干挖空（ ）/（）渲染成醒目填空框，答题人能看清空在哪 */
+  function stemHtml(text) {
+    return esc(text).replace(/（\s*）/g, "（<span class=\"q-blank\"></span>）");
+  }
+
   function shuffle(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -233,21 +238,42 @@
       let pos = 0;
       const secs = set.sections.map((sec) => {
         const qs = sec.questions;
-        let c = 0;
+        let a = 0, c = 0;
         qs.forEach(() => {
-          const a = state.answered[pos];
+          const ans = state.answered[pos];
           pos += 1;
-          if (a && a.correct) c += 1;
+          if (ans) {
+            a += 1;
+            if (ans.correct) c += 1;
+          }
         });
-        return `<span>${sec.name} <b class="${c === qs.length && qs.length ? "ok" : ""}">${c}/${qs.length}</b></span>`;
+        return `<span>${sec.name} <b class="${c === qs.length && qs.length ? "ok" : ""}">${a}/${qs.length}</b>${c ? `<b class="ok">对${c}</b>` : ""}</span>`;
       }).join("");
       return `<span>得分 <b>${state.score.toFixed(1)}</b></span>
               <span>答对 <b class="ok">${state.correctCount}</b> / 答错 <b class="no">${state.answeredCount - state.correctCount}</b> / 共 ${set.qCount}</span>
               ${secs}`;
     }
+    if (state.mode === "mock") {
+      // 分栏显示已作答进度，每答一题即时更新
+      const paper = curPaper();
+      const groups = [];
+      paper.forEach((item, idx) => {
+        let g = groups[groups.length - 1];
+        if (!g || g.type !== item.sec.type) {
+          g = { type: item.sec.type, name: item.sec.name, total: 0, answered: 0 };
+          groups.push(g);
+        }
+        g.total += 1;
+        if ((state.mockPicks[idx] || []).length) g.answered += 1;
+      });
+      const secs = groups.map((g) => `<span>${g.name} <b>${g.answered}/${g.total}</b></span>`).join("");
+      return `<span>已作答 <b>${pickedCount()}</b> / ${curTotal()} 题</span>
+              <span>整卷作答完成后统一判分，不逐题显示答案</span>
+              ${secs}`;
+    }
     const total = curTotal();
     return `<span>已作答 <b>${pickedCount()}</b> / ${total} 题</span>
-            <span>${state.mode === "mock" ? "整卷作答完成后统一判分，不逐题显示答案" : "每答一题立即给出答案与解析"}</span>`;
+            <span>每答一题立即给出答案与解析</span>`;
   }
 
   function renderQuestion() {
@@ -272,7 +298,7 @@
       `${item.sec.name} · 每题 ${item.sec.score} 分`);
     card.appendChild(chip);
 
-    const stem = el("div", "q-stem", `<b>${num}.</b> ${esc(q.stem)}`);
+    const stem = el("div", "q-stem", `<b>${num}.</b> ${stemHtml(q.stem)}`);
     card.appendChild(stem);
 
     const optWrap = el("div", "q-options");
@@ -727,7 +753,7 @@
       : `<span class="r-tag no">✗ 答错</span>`;
     return `
       <div class="r-head">${tag}<span class="r-num">${esc(f.sec.name)} · 第 ${f.num} 题</span></div>
-      <div class="r-stem">${esc(q.stem)}</div>
+      <div class="r-stem">${stemHtml(q.stem)}</div>
       ${q.options.map(([letter, text]) => {
         const cls = q.answer.includes(letter) ? " ans" : it.user.includes(letter) ? " mine" : "";
         const mark = q.answer.includes(letter) ? " ✓" : it.user.includes(letter) ? " ✗" : "";
@@ -782,7 +808,7 @@
           <span class="badge badge-gaopin">考频 ×${q.freq}</span>
           <span class="gp-sets">出现于 ${esc(sets)}</span>
         </div>
-        <div class="gp-stem"><b>${idx + 1}.</b> ${esc(q.stem)}</div>
+        <div class="gp-stem"><b>${idx + 1}.</b> ${stemHtml(q.stem)}</div>
         <div class="gp-answer" hidden>
           <div class="gp-answer-row"><b>正确答案：</b>${esc(q.answer)}</div>
           <div class="gp-explain">${esc(q.explanation || "")}</div>
